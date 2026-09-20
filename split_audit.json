@@ -1,0 +1,9 @@
+{
+  "counts": {
+    "test": 1610,
+    "train": 5373,
+    "val": 1613
+  },
+  "n_embargoed": 1080,
+  "min_train_to_eval_gap_frames": 11
+}

@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign Reader - UI design mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* Design tokens ------------------------------------------------------- */
+  :root{
+    --page:#EDF0F4;        /* cool paper */
+    --panel:#FFFFFF;
+    --ink:#16202E;         /* deep navy ink */
+    --muted:#5D6878;
+    --line:#D9DEE6;
+    --stage:#0F1A2B;       /* camera stage */
+    --stage-2:#17263D;
+    --landmark:#E5383B;    /* same red as the dataset's skeleton dots */
+    --sure:#1E8A63;
+    --unsure:#B77A08;
+    --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+    --body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page);color:var(--ink);font:400 16px/1.5 var(--body)}
+  .wrap{max-width:1120px;margin:0 auto;padding:20px 20px 48px}
+  header{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+  h1{font:700 1.35rem/1 var(--display);margin:0;letter-spacing:-.01em}
+  .note{color:var(--muted);font-size:.9rem;margin:0}
+  .seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:3px}
+  .seg button{font:500 .9rem var(--body);border:0;background:none;color:var(--muted);padding:7px 14px;border-radius:7px;cursor:pointer}
+  .seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+  button:focus-visible,input:focus-visible{outline:3px solid #5B8DEF;outline-offset:2px}
+
+  .grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px}
+  @media (max-width:860px){.grid{grid-template-columns:1fr}}
+
+  /* Stage ---------------------------------------------------------------- */
+  .stage{position:relative;background:radial-gradient(120% 90% at 30% 20%,var(--stage-2),var(--stage));border-radius:16px;
+         min-height:520px;overflow:hidden;color:#fff}
+  .stage svg.hand{position:absolute;inset:0;width:100%;height:100%;transition:opacity .25s}
+  .badge{position:absolute;top:14px;left:14px;display:flex;gap:8px;align-items:center;background:rgba(255,255,255,.12);
+         backdrop-filter:blur(6px);padding:6px 12px;border-radius:999px;font-size:.85rem}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--sure)}
+  .placeholder{position:absolute;top:14px;right:14px;font-size:.8rem;color:rgba(255,255,255,.55)}
+  .reading{position:absolute;left:18px;bottom:18px;display:flex;align-items:flex-end;gap:16px}
+  .letter{font:700 clamp(96px,16vw,168px)/0.8 var(--display);letter-spacing:-.04em;min-width:1.1ch}
+  .conf{padding-bottom:10px}
+  .conf b{display:block;font:700 1.6rem/1 var(--display)}
+  .conf span{font-size:.85rem;color:rgba(255,255,255,.7)}
+  .hint{position:absolute;left:0;right:0;top:46%;text-align:center;font-size:1.05rem;color:rgba(255,255,255,.85);padding:0 30px;display:none}
+  .stage[data-state="none"] svg.hand,.stage[data-state="none"] .reading{opacity:0}
+  .stage[data-state="none"] .hint{display:block}
+  .stage[data-state="unsure"] .letter{opacity:.45}
+  .stage[data-state="unsure"] .conf b{color:#F2C46B}
+
+  /* Side panels --------------------------------------------------------- */
+  .col{display:grid;gap:14px;align-content:start}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  h2{font:700 1rem/1.2 var(--display);margin:0 0 10px}
+  .word{display:flex;gap:6px;flex-wrap:wrap;min-height:60px;align-items:center}
+  .tile{font:700 1.8rem/1 var(--display);width:44px;height:54px;display:grid;place-items:center;border:1.5px solid var(--ink);border-radius:8px;background:#fff}
+  .tile.gap{border-style:dashed;color:var(--muted);font-size:.8rem;width:30px}
+  .pending{border-style:dashed;border-color:var(--muted);color:var(--muted);position:relative}
+  .ring{position:absolute;inset:-5px;width:calc(100% + 10px);height:calc(100% + 10px);fill:none;stroke:var(--sure);stroke-width:3;
+        stroke-dasharray:100;stroke-dashoffset:100;pathLength:100}
+  .word.holding .ring{animation:hold .8s linear forwards}
+  @keyframes hold{to{stroke-dashoffset:0}}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .btn{font:500 .9rem var(--body);border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;padding:8px 12px;cursor:pointer}
+  .btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+  ul.alts{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+  .alts li{display:grid;grid-template-columns:28px 1fr 46px;gap:10px;align-items:center}
+  .alts .l{font:700 1.15rem var(--display)}
+  .bar{height:8px;background:#E7EBF1;border-radius:99px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--ink);border-radius:99px;transition:width .3s}
+  .alts li:first-child .bar i{background:var(--sure)}
+  .stage[data-state="unsure"] ~ .col .alts li:first-child .bar i{background:var(--unsure)}
+  .pct{font-variant-numeric:tabular-nums;color:var(--muted);text-align:right;font-size:.9rem}
+  .privacy{display:grid;gap:8px;font-size:.92rem}
+  .privacy .row{display:flex;justify-content:space-between;gap:12px;align-items:center;border-top:1px solid var(--line);padding-top:8px}
+  .privacy .row:first-of-type{border-top:0;padding-top:0}
+  .switch{width:38px;height:22px;border-radius:99px;background:#C6CCD6;position:relative;flex:none}
+  .switch::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff}
+  .switch.on{background:var(--sure)} .switch.on::after{left:19px}
+  .range{display:flex;align-items:center;gap:10px}
+  input[type=range]{flex:1;accent-color:var(--ink)}
+  .spec{margin-top:22px;font-size:.88rem;color:var(--muted)}
+  .spec code{background:#E3E8EF;padding:1px 6px;border-radius:5px}
+  @media (prefers-reduced-motion:reduce){.word.holding .ring{animation:none;stroke-dashoffset:0}.bar i{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Sign Reader</h1>
+      <p class="note">Design mockup: static, no camera. Use the switch to preview each state.</p>
+    </div>
+    <div class="seg" role="group" aria-label="Preview state">
+      <button type="button" data-set="sure" aria-pressed="true">Confident</button>
+      <button type="button" data-set="unsure" aria-pressed="false">Not sure</button>
+      <button type="button" data-set="none" aria-pressed="false">No hand</button>
+    </div>
+  </header>
+
+  <main class="grid">
+    <section class="stage" id="stage" data-state="sure" aria-label="Camera view">
+      <div class="badge"><span class="dot"></span><span>Reading on this device</span></div>
+      <div class="placeholder">camera preview placeholder</div>
+      <svg class="hand" id="hand" viewBox="0 0 400 520" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
+      <p class="hint">Hold one hand in the frame, palm toward the camera.</p>
+      <div class="reading" aria-live="polite">
+        <div class="letter" id="letter">L</div>
+        <div class="conf"><b id="confNum">94%</b><span id="confText">sure</span></div>
+      </div>
+    </section>
+
+    <aside class="col">
+      <section class="card">
+        <h2>Spelled so far</h2>
+        <div class="word" id="word"></div>
+        <div class="actions">
+          <button class="btn primary" type="button" id="demo">Play demo</button>
+          <button class="btn" type="button">Add space</button>
+          <button class="btn" type="button">Backspace</button>
+          <button class="btn" type="button">Copy text</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Other guesses</h2>
+        <ul class="alts" id="alts"></ul>
+      </section>
+
+      <section class="card privacy">
+        <h2>Privacy</h2>
+        <div class="row"><span>Process video on this device</span><span class="switch on" role="img" aria-label="on"></span></div>
+        <div class="row"><span>Send frames to a server</span><span class="switch" role="img" aria-label="off"></span></div>
+        <div class="row"><span>Camera frames are never saved.</span></div>
+        <div class="range"><label for="th">Answer only when at least</label>
+          <input id="th" type="range" min="40" max="90" value="55"><output id="thv">55%</output></div>
+      </section>
+    </aside>
+  </main>
+
+  <p class="spec">
+    Behaviour spec. A letter is added after it stays the top guess for <code>0.8 s</code>. Below the confidence
+    threshold the app shows "not sure" and adds nothing. J and Z involve motion, so a single frame is a weaker
+    signal for them; the UI marks them "motion sign, check twice". Colour is never the only signal: state is
+    also spelled out in words.
+  </p>
+</div>
+
+<script>
+  // Hand skeleton (21 landmarks) drawn like the training images: red dots, white lines
+  const P=[[190,470],[145,425],[112,380],[92,335],[80,295],[160,360],[150,290],[146,240],[143,196],[196,350],[198,268],[199,212],[199,166],
+           [232,358],[242,285],[247,235],[252,192],[266,378],[286,320],[300,282],[312,246]];
+  const C=[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[0,17],[17,18],[18,19],[19,20]];
+  const NS='http://www.w3.org/2000/svg', hand=document.getElementById('hand');
+  const box=document.createElementNS(NS,'rect');
+  Object.entries({x:60,y:130,width:280,height:380,rx:10,fill:'none',stroke:'rgba(255,255,255,.55)','stroke-width':2,'stroke-dasharray':'6 6'}).forEach(([k,v])=>box.setAttribute(k,v));
+  hand.appendChild(box);
+  C.forEach(([a,b])=>{const l=document.createElementNS(NS,'line');
+    Object.entries({x1:P[a][0],y1:P[a][1],x2:P[b][0],y2:P[b][1],stroke:'#fff','stroke-width':3,'stroke-linecap':'round'}).forEach(([k,v])=>l.setAttribute(k,v));hand.appendChild(l)});
+  P.forEach(([x,y])=>{const c=document.createElementNS(NS,'circle');
+    Object.entries({cx:x,cy:y,r:6,fill:'#E5383B',stroke:'#fff','stroke-width':1.5}).forEach(([k,v])=>c.setAttribute(k,v));hand.appendChild(c)});
+
+  const stage=document.getElementById('stage'), letter=document.getElementById('letter'),
+        confNum=document.getElementById('confNum'), confText=document.getElementById('confText'),
+        alts=document.getElementById('alts'), word=document.getElementById('word');
+  const th=document.getElementById('th'), thv=document.getElementById('thv');
+  th.oninput=()=>thv.textContent=th.value+'%';
+
+  const STATES={
+    sure:{l:'L',c:94,t:'sure',a:[['L',94],['G',3],['Z',1]]},
+    unsure:{l:'M',c:41,t:'not sure - hold steady or adjust your hand',a:[['M',41],['N',33],['S',14]]},
+    none:{l:'',c:0,t:'no hand',a:[['-',0],['-',0],['-',0]]}
+  };
+  function render(name){
+    const s=STATES[name]; stage.dataset.state=name;
+    letter.textContent=s.l; confNum.textContent=name==='none'?'':s.c+'%'; confText.textContent=s.t;
+    alts.innerHTML=s.a.map(([l,p])=>`<li><span class="l">${l}</span><span class="bar"><i style="width:${p}%"></i></span><span class="pct">${p?p+'%':''}</span></li>`).join('');
+    document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.set===name));
+  }
+  document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>render(b.dataset.set));
+
+  function tiles(text,pending){
+    word.classList.remove('holding');
+    word.innerHTML=[...text].map(ch=>ch===' '?'<span class="tile gap">space</span>':`<span class="tile">${ch}</span>`).join('')+
+      (pending?`<span class="tile pending">${pending}<svg class="ring" viewBox="0 0 44 54" preserveAspectRatio="none"><rect x="1.5" y="1.5" width="41" height="51" rx="8" pathLength="100"/></svg></span>`:'');
+    if(pending){void word.offsetWidth;word.classList.add('holding');}
+  }
+  let timer=null;
+  document.getElementById('demo').onclick=()=>{
+    clearTimeout(timer); render('sure'); const target='HELLO'; let i=0;
+    const step=()=>{ if(i>=target.length){tiles(target);return;}
+      const ch=target[i]; letter.textContent=ch; confNum.textContent=(90+Math.floor(Math.random()*9))+'%';
+      tiles(target.slice(0,i),ch); i++; timer=setTimeout(step,1000); };
+    step();
+  };
+  render('sure'); tiles('HEL');
+</script>
+</body>
+</html>

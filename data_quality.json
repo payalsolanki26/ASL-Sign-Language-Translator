@@ -1,0 +1,15 @@
+{
+  "n_files": 9677,
+  "n_valid": 9676,
+  "n_invalid": 1,
+  "n_blurry_flagged": 0,
+  "n_exact_duplicates": 1,
+  "n_classes": 27,
+  "min_class_count": 297,
+  "max_class_count": 486,
+  "imbalance_ratio": 1.636,
+  "median_frame_gap_s": 0.0335,
+  "n_takes_total": 53,
+  "mean_brightness": 163.3,
+  "median_blur_var": 847.08
+}

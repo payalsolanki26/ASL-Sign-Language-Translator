@@ -1,0 +1,7 @@
+{
+  "images_scanned": 9676,
+  "images_with_exif": 0,
+  "images_with_face_detected": 123,
+  "face_hit_rate_pct": 1.271,
+  "note": "Haar cascade misses partial/side faces: manually review flagged files and a random sample."
+}

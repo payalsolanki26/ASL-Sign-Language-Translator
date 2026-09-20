@@ -1,0 +1,11 @@
+# NEVER commit data, keys or trained artifacts
+own_dataset/
+data/raw/
+data/encrypted/
+artifacts/
+*.enc
+*.key
+.env
+*.pt
+*.onnx
+__pycache__/
