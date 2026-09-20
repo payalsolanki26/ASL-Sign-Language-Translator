@@ -21,6 +21,37 @@ for p in [str(ROOT_DIR), str(SRC_DIR)]:
     if p not in sys.path:
         sys.path.insert(0, p)
 
+# Headless Linux / Streamlit Community Cloud Environment Guard
+# Resolves dependency conflicts where mediapipe pulls non-headless opencv-contrib-python
+# which fails on headless Linux with "ImportError: libGL.so.1: cannot open shared object file".
+def _ensure_headless_opencv():
+    """Ensure opencv-python-headless is active and remove conflicting GUI opencv packages."""
+    try:
+        import cv2
+        if hasattr(cv2, "resize"):
+            return
+    except (ImportError, Exception) as e:
+        err_msg = str(e).lower()
+        if "libgl" in err_msg or "cannot open shared object" in err_msg or "no module" in err_msg:
+            try:
+                import subprocess
+                # Remove GUI opencv packages pulled by mediapipe or transitive deps
+                subprocess.run(
+                    [sys.executable, "-m", "pip", "uninstall", "-y", "opencv-python", "opencv-contrib-python", "opencv-contrib-python-headless"],
+                    check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                )
+                # Reinstall only opencv-python-headless
+                subprocess.run(
+                    [sys.executable, "-m", "pip", "install", "--no-cache-dir", "--force-reinstall", "--no-deps", "opencv-python-headless>=4.8"],
+                    check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                )
+                import importlib
+                importlib.invalidate_caches()
+            except Exception:
+                pass
+
+_ensure_headless_opencv()
+
 # Robust import strategy to handle both structured (src/asl/...) and flattened repo layouts
 try:
     from asl.config import load_config, resolve
@@ -36,6 +67,7 @@ except ImportError:
     except ImportError as e:
         st.error(f"Failed to import project modules: {e}")
         st.stop()
+
 
 # Page configuration
 st.set_page_config(
